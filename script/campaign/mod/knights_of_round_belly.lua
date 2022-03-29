@@ -1787,7 +1787,7 @@ end, 0.1);
 -- away we go!;
 ConfigureTheMod();
 
-DEBUG = true;
+DEBUG = false;
 
 PrintError("FUCK");
 
