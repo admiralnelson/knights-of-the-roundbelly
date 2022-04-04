@@ -1,4 +1,5 @@
 ---SCRIPT WORKING.
+local VERSION = "0.2.0"
 local json = require("libsneedio_json");
 local var_dump = require("var_dump");
 
@@ -6,6 +7,8 @@ local print = function (x)
   out("admiralnelson: "..tostring(x));
   print2(tostring(x).."\n");
 end;
+
+print("Running Knights of Round Belly mod version "..VERSION);
 
 local DEBUG  = false;
 local PError = PrintError or print;
@@ -76,7 +79,8 @@ local ADMIRALNELSON_GRAIL_OGRE_VERSION = "ADMIRALNELSON_GRAIL_OGRE_VERSION";
 local ADMIRALNELSON_SAVED_PEASANT_TABLE = "ADMIRALNELSON_SAVED_PEASANT_TABLE";
 local ADMIRALNELSON_SAVED_OGRE_SPAWNED_MARKER_TABLE = "ADMIRALNELSON_SAVED_OGRE_SPAWNED_MARKER_TABLE";
 local ADMIRALNELSON_SAVED_RANDOM_OGRE_TABLE = "ADMIRALNELSON_SAVED_RANDOM_OGRE_TABLE";
-local GRAIL_OGRE_VERSION = "1";
+local ADMIRALNELSON_SAVED_LOUIS_LE_GROS_GOT_WEAPON = "ADMIRALNELSON_SAVED_LOUIS_LE_GROS_GOT_WEAPON";
+local GRAIL_OGRE_VERSION = VERSION;
 
 local DELAYED_UPDATE_FOR_LABEL = 0.7;
 
@@ -91,19 +95,21 @@ local DICE_THRESHOLD_EACH_TURN_FOR_BOT = 27;
 
 --spawn: ok, localisation: ok, skill set: untested, weapon: untested, peasant slot reduction: untested
 local LOUIS_LE_GROS_AGENT_KEY = "admnelson_bret_ogre_louis_le_gros_agent_key";
---spawn: ?, localisation: ?, skill set: untested, weapon: untested, peasant slot reduction: untested
+--spawn: ok, localisation: ok, skill set: untested, weapon: no weapon, peasant slot reduction: untested
 local CLAUDIN_AGENT_KEY       = "admnelson_bret_ogre_claudin_agent_key";
---spawn: ?, localisation: ?, skill set: untested, weapon: untested, peasant slot reduction: untested
+--spawn: ok, localisation: ok, skill set: untested, weapon: no weapon, peasant slot reduction: untested
 local GARRAVAIN_D_ESTRANGOT_AGENT_KEY = "admnelson_bret_ogre_garravain_d_estrangot_agent_key";
---spawn: ?, localisation: ?, skill set: untested, weapon: untested, peasant slot reduction: untested
+--spawn: ok, localisation: ok, skill set: untested, weapon: no weapon, peasant slot reduction: untested
 local HECTOR_DE_MARIS_AGENT_KEY     = "admnelson_bret_ogre_hector_de_maris_agent_key";
---spawn: ?, localisation: ?, skill set: untested, weapon: untested, peasant slot reduction: untested
+--spawn: ok, localisation: ok, skill set: untested, weapon: no weapon, peasant slot reduction: untested
 local YVAIN_LE_BATARD_AGENT_KEY     = "admnelson_bret_ogre_yvain_le_batard_agent_key";
---spawn: ?, localisation: ?, skill set: untested, weapon: untested, peasant slot reduction: untested
+--spawn: ok, localisation: ?, skill set: untested, weapon: no weapon, peasant slot reduction: untested
 local GORNEMANT_DE_GOORT_AGENT_KEY  = "admnelson_bret_ogre_gornemant_de_goort_agent_key"
---spawn: ?, localisation: ?, skill set: untested, weapon: untested, peasant slot reduction: untested
+--spawn: ok, localisation: ?, skill set: untested, weapon: no weapon, peasant slot reduction: untested
 local LUCANT_LE_BOUTELLIER_AGENT_KEY = "admnelson_bret_ogre_lucant_le_boutellier_agent_key";
 
+-- louise le gros weapon skill key
+local LOUIS_LE_GROS_WEAPON_SKILL_KEY = "admiralnelson_ogre_archduke_grand_mace_characther_skills_key_lane_2";
 
 local DILLEMA_LOIS_LE_GROS_RECRUITMENT = "admiralnelson_archduke_recruitment_at_massif_orcal_dilemma_key";
 local DILLEMA_LOIS_LE_GROS_RECRUITMENT_AT_ARABY = "admiralnelson_archduke_recruitment_at_araby_dilemma_key";
@@ -457,6 +463,26 @@ local FindHumanBretonnianFactions = function ()
     if(IsBretonnianHuman(BretonnianFaction)) then table.insert(ret, BretonnianFaction); end
   end);
   return ret;
+end
+
+local FindReferenceToLouisLeGros = function ()
+  local bretonniaFac = DESIGNATED_FACTION;
+  if(bretonniaFac == nil) then
+    PrintError("DESIGNATED_FACTION is nil");
+    print(debug.traceback());
+    return nil;
+  end
+  local characterList = bretonniaFac:character_list();
+  for i = 0, characterList:num_items() - 1 do
+    local character = characterList:item_at(i);
+    if(character:character_subtype_key() == LOUIS_LE_GROS_AGENT_KEY) then
+      return character;
+    end
+  end
+  PrintError("Could not find reference to Louis Le Gros");
+  PrintWarning("It is possible that he may died");
+  print(debug.traceback());
+  return nil;
 end
 
 local GetOgreSpawnSettlements = function (agentkey)
@@ -1051,17 +1077,46 @@ local ProcessSettlementPostSiege = function (context)
   end, 0.7);
 end
 
+
+local GiveLouisLeGrosHisWeaponIfPossible = function ()
+  -- print("GiveLouisLeGrosHisWeaponIfPossible");
+  -- if 1 then return; end
+  -- local lord = FindReferenceToLouisLeGros();
+  -- if(lord == nil) then return; end
+  -- local flagHasTheWeaponAlready = GetSavedValue(ADMIRALNELSON_SAVED_LOUIS_LE_GROS_GOT_WEAPON);
+  -- if(flagHasTheWeaponAlready == true) then
+  --   PrintWarning("Louis Le Gros already got his weapon");
+  --   return;
+  -- end
+  -- if(lord:has_skill(LOUIS_LE_GROS_WEAPON_SKILL_KEY)) then
+  --   cm:force_add_ancillary(lord, LOUIS_LE_GROS_WEAPON_SKILL_KEY, false);
+  --   PrintWarning("Louis le Gros just got his weapon");
+  --   SetSavedValue(ADMIRALNELSON_SAVED_LOUIS_LE_GROS_GOT_WEAPON, true);
+  -- else
+  --   PrintWarning("Louis Le Gros does not have weapon skill");
+  -- end
+end
+
 local ProcessEventPostBattle = function (context)
   local faction = context:character():faction();
   if(not IsBretonnianHuman(faction)) then return; end
   if(not IsFactionAllowedToSpawnGrailOgre(faction)) then return; end
   CheckForLockedOgres();
+  GiveLouisLeGrosHisWeaponIfPossible();
 
   local actualLord = context:character();
   local army    = actualLord:military_force();
   local lordX   = actualLord:logical_position_x();
   local lordY   = actualLord:logical_position_y();
   local lordKey = actualLord:character_subtype_key();
+  if(actualLord:region():is_null_interface()) then
+    PrintWarning("===============");
+    PrintError("No region for lord "..lordKey);
+    PrintError("Position at: x "..tostring(lordX).." y "..tostring(lordY));
+    print(debug.traceback());
+    PrintWarning("===============");
+    return;
+  end
   local regionKey = actualLord:region():name();
   PrintWarning("===============");
   PrintError("battle at: "..regionKey);
@@ -1117,6 +1172,7 @@ local CheckIfDesignatedFactionDie = function ()
 end
 
 local OnBretTurns = function ()
+  GiveLouisLeGrosHisWeaponIfPossible();
   if(IS_PLAYED_BY_HUMAN) then
     CheckForLockedOgres();
     return;
