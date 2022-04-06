@@ -963,6 +963,9 @@ local SpawnGrailOgreRandomlyForBotIfPossible = function (faction)
     PrintError("ERROR, SELECTED LORD WAS NULL!\a\a\a");
     return;
   end
+  -- low ogre lords upkeep for AI faction because 500 ecu per mo can cripple the AI...
+  cm:apply_effect_bundle(BUNDLE_NO_UPKEEP_FOR_AI, GetFactionName(DESIGNATED_FACTION), 0);
+  -- spawn ogre
   local SelectedLordX = SelectedLord:logical_position_x();
   local SelectedLordY = SelectedLord:logical_position_y();
   local factionIdx = faction:command_queue_index();
@@ -978,9 +981,6 @@ local SpawnGrailOgreRandomlyForBotIfPossible = function (faction)
       PrintWarning("FIXME: TODO unlocks all the bonus after spawn for bot user? cqi was "..tostring(cqi));
       -- todo?
       -- unlocks all the bonus after spawn?
-      -- set upkeep to 0? because 500 ecu per mo can cripple the AI...
-      -- local stringCqi = tostring(cqi);
-      -- cm:apply_effect_bundle(GetFactionName(DESIGNATED_FACTION), BUNDLE_NO_UPKEEP_FOR_AI, stringCqi, 0);
     end);
     PrintWarning("DUKE has spawned \a\a");
     return;
@@ -1203,6 +1203,78 @@ local RPCSyncVariable = function ()
   PrintWarning("RPC RPCSyncVariable done");
 end
 
+
+local DebugMode = function ()
+  PrintError("FUCK");
+  if not cm:get_saved_value("knights_of_round_belly_TEST") then
+      cm:set_saved_value("knights_of_round_belly_TEST", true)
+      cm:spawn_character_to_pool("wh_main_brt_bretonnia",
+                                 "names_name_11382017",
+                                 "names_name_11382018", "", "", 90, true, "general", "admnelson_bret_ogre_louis_le_gros_agent_key", false, "");
+      cm:apply_effect_bundle(BUNDLE_NO_UPKEEP_FOR_AI, GetFactionName(DESIGNATED_FACTION), 0);
+      DelayedCall(function ()
+        local bret = FindHumanBretonnianFactions()[1];
+        local factionCommandIdx = bret ~= nil and
+                                    bret:command_queue_index()
+                                  or -1;
+
+        local cityCommandIdx = bret ~= nil and
+                                bret:home_region():cqi()
+                              or -1;
+
+        if (factionCommandIdx == -1 or cityCommandIdx == -1) then
+            print("fac command "..tostring(factionCommandIdx).." city command"..tostring(cityCommandIdx));
+            return;
+        end
+        PrintError(factionCommandIdx);
+        PrintError(cityCommandIdx);
+        cm:spawn_unique_agent_at_region(
+            factionCommandIdx,
+            "admnelson_bret_ogre_yvain_le_batard_agent_key",
+            cityCommandIdx,
+            true
+        );
+        cm:spawn_unique_agent_at_region(
+            factionCommandIdx,
+            "admnelson_bret_ogre_claudin_agent_key",
+            cityCommandIdx,
+            true
+        );
+        cm:spawn_unique_agent_at_region(
+          factionCommandIdx,
+          "admnelson_bret_ogre_garravain_d_estrangot_agent_key",
+          cityCommandIdx,
+          true
+        );
+        cm:spawn_unique_agent_at_region(
+          factionCommandIdx,
+          "admnelson_bret_ogre_lucant_le_boutellier_agent_key",
+          cityCommandIdx,
+          true
+        );
+        cm:spawn_unique_agent_at_region(
+          factionCommandIdx,
+          "admnelson_bret_ogre_gornemant_de_goort_agent_key",
+          cityCommandIdx,
+          true
+        );
+        cm:spawn_unique_agent_at_region(
+          factionCommandIdx,
+          "admnelson_bret_ogre_hector_de_maris_agent_key",
+          cityCommandIdx,
+          true
+        );
+
+
+        PrintWarning("spawned!");
+      end);
+    else
+      LoadData();
+      UpdateStateAndUI();
+  end
+  PrintWarning("debug mode completed");
+end
+
 local START = function ()
   DelayedCall(function ()
 
@@ -1413,7 +1485,7 @@ local START = function ()
       end,
       true
     );
-  
+
     core:add_listener(
       "admiralnelson_monitor_for_settlement_siege_raze",
       "CharacterRazedSettlement",
@@ -1443,84 +1515,17 @@ local START = function ()
   ConfigureTheMod();
 end
 
+DEBUG = false;
+
+
 if(PJ_LOADFILE) then
   PrintWarning("this script is running from file directly...");
   START();
+  if(DEBUG) then DebugMode(); end
 else
   cm:add_first_tick_callback(function ()
     PrintWarning("release mode");
     START();
-  end)
+    if(DEBUG) then DebugMode(); end
+  end);
 end
-
-DEBUG = false;
-
-PrintError("FUCK");
-
-if DEBUG then
-  if not cm:get_saved_value("knights_of_round_belly_TEST") then
-      cm:set_saved_value("knights_of_round_belly_TEST", true)
-      cm:spawn_character_to_pool("wh_main_brt_bretonnia",
-                                 "names_name_11382017",
-                                 "names_name_11382018", "", "", 90, true, "general", "admnelson_bret_ogre_louis_le_gros_agent_key", false, "");
-      DelayedCall(function ()
-        local bret = FindHumanBretonnianFactions()[1];
-        local factionCommandIdx = bret ~= nil and
-                                    bret:command_queue_index()
-                                  or -1;
-
-        local cityCommandIdx = bret ~= nil and
-                                bret:home_region():cqi()
-                              or -1;
-
-        if (factionCommandIdx == -1 or cityCommandIdx == -1) then
-            print("fac command "..tostring(factionCommandIdx).." city command"..tostring(cityCommandIdx));
-            return;
-        end
-        PrintError(factionCommandIdx);
-        PrintError(cityCommandIdx);
-        cm:spawn_unique_agent_at_region(
-            factionCommandIdx,
-            "admnelson_bret_ogre_yvain_le_batard_agent_key",
-            cityCommandIdx,
-            true
-        );
-        cm:spawn_unique_agent_at_region(
-            factionCommandIdx,
-            "admnelson_bret_ogre_claudin_agent_key",
-            cityCommandIdx,
-            true
-        );
-        cm:spawn_unique_agent_at_region(
-          factionCommandIdx,
-          "admnelson_bret_ogre_garravain_d_estrangot_agent_key",
-          cityCommandIdx,
-          true
-        );
-        cm:spawn_unique_agent_at_region(
-          factionCommandIdx,
-          "admnelson_bret_ogre_lucant_le_boutellier_agent_key",
-          cityCommandIdx,
-          true
-        );
-        cm:spawn_unique_agent_at_region(
-          factionCommandIdx,
-          "admnelson_bret_ogre_gornemant_de_goort_agent_key",
-          cityCommandIdx,
-          true
-        );
-        cm:spawn_unique_agent_at_region(
-          factionCommandIdx,
-          "admnelson_bret_ogre_hector_de_maris_agent_key",
-          cityCommandIdx,
-          true
-        );
-        PrintWarning("spawned!");
-      end);
-    else
-      LoadData();
-      UpdateStateAndUI();
-  end
-end
-
-PrintWarning("completed");
