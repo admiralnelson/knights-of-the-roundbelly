@@ -82,7 +82,7 @@ local ADMIRALNELSON_SAVED_RANDOM_OGRE_TABLE = "ADMIRALNELSON_SAVED_RANDOM_OGRE_T
 local ADMIRALNELSON_SAVED_LOUIS_LE_GROS_GOT_WEAPON = "ADMIRALNELSON_SAVED_LOUIS_LE_GROS_GOT_WEAPON";
 local GRAIL_OGRE_VERSION = VERSION;
 
-local DELAYED_UPDATE_FOR_LABEL = 0.7;
+local DELAYED_UPDATE_FOR_LABEL = 0.4;
 
 local HUMAN_DICE_SIDES = 10;
 local HUMAN_DICE_ROLL = 4;
@@ -93,7 +93,7 @@ local BOT_DICE_SIDES = 10;
 local BOT_DICE_ROLL = 4;
 local DICE_THRESHOLD_EACH_TURN_FOR_BOT = 27;
 
---spawn: ok, localisation: ok, skill set: untested, weapon: untested, peasant slot reduction: untested
+--spawn: ok, localisation: ok, skill set: ok, weapon: ok, peasant slot reduction: ok
 local LOUIS_LE_GROS_AGENT_KEY = "admnelson_bret_ogre_louis_le_gros_agent_key";
 --spawn: ok, localisation: ok, skill set: untested, weapon: no weapon, peasant slot reduction: untested
 local CLAUDIN_AGENT_KEY       = "admnelson_bret_ogre_claudin_agent_key";
@@ -120,6 +120,8 @@ local DILLEMA_GARRAVAIN_RECRUITMENT = "admiralnelson_ogre_recruitment_at_badland
 local DILLEMA_LUCANT_RECRUITMENT = "admiralnelson_ogre_recruitment_at_border_princes_and_slyvania_dilemma_key";
 local DILLEMA_CLAUDIN_RECRUITMENT = "admiralnelson_ogre_recruitment_at_woodelves_region_dilemma_key";
 local DILLEMA_OTHER_GRAIL_OGRE_DUE_TO_OGRE_UNIT_RECRUITMENT = "admiralnelson_ogre_recruitment_because_army_has_ogre_merc_dilemma_key";
+
+local BUNDLE_NO_UPKEEP_FOR_AI = "admiralnelson_ogre_low_upkeep_for_ogre_heroes_for_AI_bundle_key"
 
 -- faction for ogre: type faction object
 local DESIGNATED_FACTION = nil;
@@ -594,11 +596,11 @@ local PickWhichFactionIsAllowedToSpawnOgre = function ()
   -- louen > fay > alberic > repanse
 
   ForEach(HumanBrets, function (faction)
-      if(TargetFaction == GetFactionByIds(BretonnianFactions[1])) then return; end -- louen
-      if(TargetFaction == GetFactionByIds(BretonnianFactions[2])) then return; end -- fay
-      if(TargetFaction == GetFactionByIds(BretonnianFactions[3])) then return; end -- alberic
-      if(TargetFaction == GetFactionByIds(BretonnianFactions[4])) then return; end -- repanse
-      if(IsBretonnianHuman(faction)) then TargetFaction = faction; end
+    if(TargetFaction == GetFactionByIds(BretonnianFactions[1])) then return; end -- louen
+    if(TargetFaction == GetFactionByIds(BretonnianFactions[2])) then return; end -- fay
+    if(TargetFaction == GetFactionByIds(BretonnianFactions[3])) then return; end -- alberic
+    if(TargetFaction == GetFactionByIds(BretonnianFactions[4])) then return; end -- repanse
+    if(IsBretonnianHuman(faction)) then TargetFaction = faction; end
   end);
   IS_PLAYED_BY_HUMAN = TargetFaction:is_human();
   return TargetFaction;
@@ -618,118 +620,118 @@ local GetGrailOgreDillemaFromAgentKey = function (agentKey)
 end
 
 local SetPeasantsCountForcefully = function (faction, peasantsAmount)
-    if not IsBretonnianHuman(faction) then
-        PrintError("SetPeasantsCountForcefully: NOT A HUMAN BRETONNIAN faction");
-        return;
-    end
+  if not IsBretonnianHuman(faction) then
+      PrintError("SetPeasantsCountForcefully: NOT A HUMAN BRETONNIAN faction");
+      return;
+  end
 
-    local region_count = faction:region_list():num_items();
+  local region_count = faction:region_list():num_items();
 
-    if cm:is_multiplayer() == false then
-        if PEASANTS_WARNING_COOLDOWN > 0 then
-            PEASANTS_WARNING_COOLDOWN = PEASANTS_WARNING_COOLDOWN - 1;
-        end
-    end
+  if cm:is_multiplayer() == false then
+      if PEASANTS_WARNING_COOLDOWN > 0 then
+          PEASANTS_WARNING_COOLDOWN = PEASANTS_WARNING_COOLDOWN - 1;
+      end
+  end
 
-    PrintError("\tPeasants: "..peasantsAmount);
-    Remove_Economy_Penalty(faction);
+  PrintError("\tPeasants: "..peasantsAmount);
+  Remove_Economy_Penalty(faction);
 
-    local peasants_per_region_fac = PEASANTS_PER_REGION;
-    local peasants_base_amount_fac = PEASANTS_BASE_AMOUNT;
+  local peasants_per_region_fac = PEASANTS_PER_REGION;
+  local peasants_base_amount_fac = PEASANTS_BASE_AMOUNT;
 
-    -- Peasants Per Region Modifiers
-    if faction:name() == "wh_main_brt_carcassonne" then
-        peasants_base_amount_fac = peasants_base_amount_fac + 5;
-    end
-    if faction:has_technology("tech_dlc07_brt_economy_farm_4") then
-        peasants_per_region_fac = peasants_per_region_fac + 1;
-    end
-    if faction:has_technology("tech_dlc07_brt_heraldry_unification") then
-        peasants_base_amount_fac = peasants_base_amount_fac + 10;
-    end
-    if faction:has_technology("tech_dlc14_brt_rally_the_peasants") then
-        peasants_base_amount_fac = peasants_base_amount_fac + 15;
-    end
+  -- Peasants Per Region Modifiers
+  if faction:name() == "wh_main_brt_carcassonne" then
+      peasants_base_amount_fac = peasants_base_amount_fac + 5;
+  end
+  if faction:has_technology("tech_dlc07_brt_economy_farm_4") then
+      peasants_per_region_fac = peasants_per_region_fac + 1;
+  end
+  if faction:has_technology("tech_dlc07_brt_heraldry_unification") then
+      peasants_base_amount_fac = peasants_base_amount_fac + 10;
+  end
+  if faction:has_technology("tech_dlc14_brt_rally_the_peasants") then
+      peasants_base_amount_fac = peasants_base_amount_fac + 15;
+  end
 
-    -- Make sure player has regions
-    if faction:region_list():num_items() < 1 then
-        peasants_base_amount_fac = 0;
-    end
+  -- Make sure player has regions
+  if faction:region_list():num_items() < 1 then
+      peasants_base_amount_fac = 0;
+  end
 
-    local free_peasants = (region_count * peasants_per_region_fac) + peasants_base_amount_fac;
-    free_peasants = math.max(1, free_peasants);
-    PrintWarning("Free Peasants: "..free_peasants);
-    local peasant_percent = (peasantsAmount / free_peasants) * 100;
-    PrintWarning("Peasant Percent: "..peasant_percent.."%");
-    peasant_percent = RoundUp(peasant_percent);
-    PrintWarning("Peasant Percent Rounded: "..peasant_percent.."%");
-    peasant_percent = math.min(peasant_percent, 200);
-    PrintWarning("Peasant Percent Clamped: "..peasant_percent.."%");
+  local free_peasants = (region_count * peasants_per_region_fac) + peasants_base_amount_fac;
+  free_peasants = math.max(1, free_peasants);
+  PrintWarning("Free Peasants: "..free_peasants);
+  local peasant_percent = (peasantsAmount / free_peasants) * 100;
+  PrintWarning("Peasant Percent: "..peasant_percent.."%");
+  peasant_percent = RoundUp(peasant_percent);
+  PrintWarning("Peasant Percent Rounded: "..peasant_percent.."%");
+  peasant_percent = math.min(peasant_percent, 200);
+  PrintWarning("Peasant Percent Clamped: "..peasant_percent.."%");
 
-    if peasant_percent > 100 then
-        peasant_percent = peasant_percent - 100;
-        PrintWarning("Peasant Percent Final: "..peasant_percent);
-        cm:apply_effect_bundle(PEASANTS_EFFECT_PREFIX..peasant_percent, faction:name(), 0);
+  if peasant_percent > 100 then
+      peasant_percent = peasant_percent - 100;
+      PrintWarning("Peasant Percent Final: "..peasant_percent);
+      cm:apply_effect_bundle(PEASANTS_EFFECT_PREFIX..peasant_percent, faction:name(), 0);
 
-        if cm:get_saved_value("ScriptEventNegativePeasantEconomy") ~= true and faction:is_human() then
-            core:trigger_event("ScriptEventNegativePeasantEconomy");
-            cm:set_saved_value("ScriptEventNegativePeasantEconomy", true);
-        end
+      if cm:get_saved_value("ScriptEventNegativePeasantEconomy") ~= true and faction:is_human() then
+          core:trigger_event("ScriptEventNegativePeasantEconomy");
+          cm:set_saved_value("ScriptEventNegativePeasantEconomy", true);
+      end
 
-        if cm:is_multiplayer() == false then
-            if PEASANTS_RATIO_POSITIVE == true and PEASANTS_WARNING_COOLDOWN < 1 then
-                Show_Peasant_Warning(faction:name());
-                PEASANTS_WARNING_COOLDOWN = 25;
-            end
-        end
+      if cm:is_multiplayer() == false then
+          if PEASANTS_RATIO_POSITIVE == true and PEASANTS_WARNING_COOLDOWN < 1 then
+              Show_Peasant_Warning(faction:name());
+              PEASANTS_WARNING_COOLDOWN = 25;
+          end
+      end
 
-        PEASANTS_RATIO_POSITIVE = false;
-    else
-        PrintWarning("Peasant Percent Final: 0");
-        cm:apply_effect_bundle(PEASANTS_EFFECT_PREFIX.."0", faction:name(), 0);
+      PEASANTS_RATIO_POSITIVE = false;
+  else
+      PrintWarning("Peasant Percent Final: 0");
+      cm:apply_effect_bundle(PEASANTS_EFFECT_PREFIX.."0", faction:name(), 0);
 
-        if cm:get_saved_value("ScriptEventNegativePeasantEconomy") == true and cm:get_saved_value("ScriptEventPositivePeasantEconomy") ~= true and faction:is_human() then
-            core:trigger_event("ScriptEventPositivePeasantEconomy");
-            cm:set_saved_value("ScriptEventPositivePeasantEconomy", true);
-        end
-        PEASANTS_RATIO_POSITIVE = true;
-    end
+      if cm:get_saved_value("ScriptEventNegativePeasantEconomy") == true and cm:get_saved_value("ScriptEventPositivePeasantEconomy") ~= true and faction:is_human() then
+          core:trigger_event("ScriptEventPositivePeasantEconomy");
+          cm:set_saved_value("ScriptEventPositivePeasantEconomy", true);
+      end
+      PEASANTS_RATIO_POSITIVE = true;
+  end
 
-    PrintError("forcefully set the peasant count!");
-    CachedPeasant[faction:name()].Used = peasantsAmount;
-    CachedPeasant[faction:name()].Free = free_peasants;
-    SaveData();
+  PrintError("forcefully set the peasant count!");
+  CachedPeasant[faction:name()].Used = peasantsAmount;
+  CachedPeasant[faction:name()].Free = free_peasants;
+  SaveData();
 end
 
 local CalculatePeasants = function (faction)
-    if not (IsBretonnianHuman(faction))  then
-        PrintError("not bretonnian!");
-        return -1;
-    end
+  if not (IsBretonnianHuman(faction))  then
+      PrintError("not bretonnian!");
+      return -1;
+  end
 
-    local peasant_count = 0;
-    local force_list = faction:military_force_list();
+  local peasant_count = 0;
+  local force_list = faction:military_force_list();
 
-    for i = 0, force_list:num_items() - 1 do
-        local force = force_list:item_at(i);
+  for i = 0, force_list:num_items() - 1 do
+    local force = force_list:item_at(i);
 
-        -- Make sure this isn't a garrison!
-        if force:is_armed_citizenry() == false and
-           force:has_general() == true then
-            local unit_list = force:unit_list();
+    -- Make sure this isn't a garrison!
+    if force:is_armed_citizenry() == false and
+        force:has_general() == true then
+        local unit_list = force:unit_list();
 
-            for j = 0, unit_list:num_items() - 1 do
-                local unit = unit_list:item_at(j);
-                local key = unit:unit_key();
-                local val = Bretonnia_Peasant_Units[key] or 0;
+        for j = 0, unit_list:num_items() - 1 do
+            local unit = unit_list:item_at(j);
+            local key = unit:unit_key();
+            local val = Bretonnia_Peasant_Units[key] or 0;
 
-                PrintWarning("\t"..key.." - "..val);
-                peasant_count = peasant_count + val;
-            end
+            PrintWarning("\t"..key.." - "..val);
+            peasant_count = peasant_count + val;
         end
     end
+end
 
-    return peasant_count;
+  return peasant_count;
 end
 
 local CalculateOgres = function (faction)
@@ -779,74 +781,82 @@ end
 -- THEN calculate the total before being passed to UpdatePeasantSlotUI
 
 local UpdateOgrePeasantResevationSlots = function (faction)
-    if not (IsBretonnianHuman(faction))  then
-        PrintError("not bretonnian!");
-        return;
-    end
+  if not (IsBretonnianHuman(faction))  then
+      PrintError("not bretonnian!");
+      return;
+  end
 
-    local totalUsedPeasants = CalculatePeasants(faction) + CalculateOgres(faction);
-    SetPeasantsCountForcefully(faction, totalUsedPeasants);
+  local totalUsedPeasants = CalculatePeasants(faction) + CalculateOgres(faction);
+  SetPeasantsCountForcefully(faction, totalUsedPeasants);
 end
 
 -- Change the picture TOO!
 
 local UpdatePeasantSlotUI = function (factionKey)
-    --"root > layout > resources_bar > right spacer_bretonnia > dy_peasants"
-    local root = core:get_ui_root();
-    local counterLabel = find_uicomponent(root, "layout", "resources_bar", "right spacer_bretonnia", "dy_peasants");
+  --"root > layout > resources_bar > right spacer_bretonnia > dy_peasants"
+  local root = core:get_ui_root();
+  local counterLabel = find_uicomponent(root, "layout", "resources_bar", "right spacer_bretonnia", "dy_peasants");
 
-    if(counterLabel == false) then
-        return;
-    end
+  if(counterLabel == false) then
+      return;
+  end
 
-    PrintError("current text is "..counterLabel:GetStateText());
-    --extract A/B
-    local split = SplitStr(counterLabel:GetStateText(), "/");
-    local A = CachedPeasant[factionKey].Used;
-    local B = CachedPeasant[factionKey].Free;
+  -- PrintError("current text is "..counterLabel:GetStateText());
+  --extract A/B
+  -- local split = SplitStr(counterLabel:GetStateText(), "/");
+  local A = CachedPeasant[factionKey].Used;
+  local B = CachedPeasant[factionKey].Free;
 
+  PrintError("A: "..A.." B: "..B);
+
+  -- PrintError("has been set");
+  -- PrintError("set picture");
+  for i = 0, counterLabel:NumImages(), 1 do
+      PrintWarning(tostring(counterLabel:GetImagePath(i)));
+  end
+  -- PrintError("dumped image pathes");
+  B = tonumber(B);
+  if(A >= B) then
+      -- PrintError("set image to negative peasant :(");
+      counterLabel:SetImagePath(NEGATIVE_PEASANT_ECON_PIC_URL, 0);
+  else
+      -- PrintError("set image to positive peasant :)");
+      counterLabel:SetImagePath(POSITIVE_PEASANT_ECON_PIC_URL, 0);
+  end
+  DelayedCall(function ()
     local newLabelText = tostring(A).."/"..B;
     PrintWarning(newLabelText);
     counterLabel:SetStateText(tostring(newLabelText));
-    PrintError("has been set");
-    PrintError("set picture");
-    for i = 0, counterLabel:NumImages(), 1 do
-        PrintWarning(tostring(counterLabel:GetImagePath(i)));
-    end
-    PrintError("dumped image pathes");
-    B = tonumber(B);
-    if(A >= B) then
-        PrintError("set image to negative peasant :(");
-        counterLabel:SetImagePath(NEGATIVE_PEASANT_ECON_PIC_URL, 0);
-    else
-        PrintError("set image to positive peasant :)");
-        counterLabel:SetImagePath(POSITIVE_PEASANT_ECON_PIC_URL, 0);
-    end
-    PrintError("set new picture");
+  end, 0.1);
+  -- PrintError("set new picture");
 end
 
-local UpdateInternalState = function ()
+local UpdateInternalState = function (onComplete)
     for _, faction in ipairs(BretonnianFactions) do
         local bretonnianFaction = GetFactionByIds(faction);
         UpdateOgrePeasantResevationSlots(bretonnianFaction);
         CalculateChivalryTraitsForFaction(bretonnianFaction);
         --Calculate_Economy_Penalty(bretonnianFaction);
     end
+    if(onComplete) then onComplete(); end
 end
 
 local UpdateStateAndUI = function ()
   if(not IS_PLAYED_BY_HUMAN) then return; end
-  -- State
+  -- State & UI
   DelayedCall(function ()
-      UpdateInternalState();
+      UpdateInternalState(function ()
+          UpdatePeasantSlotUI(cm:get_local_faction_name(true));
+          PrintWarning("update OK?");
+        end);
       PrintWarning("calculate OK?");
   end);
 
   -- UI
-  DelayedCall(function ()
-      UpdatePeasantSlotUI(cm:get_local_faction_name(true));
-      PrintWarning("update OK?");
-  end, DELAYED_UPDATE_FOR_LABEL);
+  -- DelayedCall(function ()
+  --     UpdatePeasantSlotUI(cm:get_local_faction_name(true));
+  --     PrintWarning("update OK?");
+  -- end, DELAYED_UPDATE_FOR_LABEL);
 
 end
 
@@ -968,6 +978,9 @@ local SpawnGrailOgreRandomlyForBotIfPossible = function (faction)
       PrintWarning("FIXME: TODO unlocks all the bonus after spawn for bot user? cqi was "..tostring(cqi));
       -- todo?
       -- unlocks all the bonus after spawn?
+      -- set upkeep to 0? because 500 ecu per mo can cripple the AI...
+      -- local stringCqi = tostring(cqi);
+      -- cm:apply_effect_bundle(GetFactionName(DESIGNATED_FACTION), BUNDLE_NO_UPKEEP_FOR_AI, stringCqi, 0);
     end);
     PrintWarning("DUKE has spawned \a\a");
     return;
@@ -1147,6 +1160,7 @@ local ConfigureTheMod = function ()
   end
   print("available random ogres:");
   var_dump(RandomGrailOgres);
+  UpdateStateAndUI();
 end
 
 local CheckIfDesignatedFactionDie = function ()
@@ -1189,244 +1203,255 @@ local RPCSyncVariable = function ()
   PrintWarning("RPC RPCSyncVariable done");
 end
 
-DelayedCall(function ()
+local START = function ()
+  DelayedCall(function ()
 
-  core:add_listener(
-    "admiralnelson_Ogre_UnitDisbanded",
-    "UnitDisbanded",
-    function (context)
-        local faction = context:unit():faction();
-        return IsBretonnianHuman(faction);
-    end,
-    function(context)
-        PrintWarning("unit was disbanded ");
-        var_dump(context);
+    core:add_listener(
+      "admiralnelson_Ogre_UnitDisbanded",
+      "UnitDisbanded",
+      function (context)
+          local faction = context:unit():faction();
+          return IsBretonnianHuman(faction);
+      end,
+      function(context)
+          PrintWarning("unit was disbanded ");
+          var_dump(context);
+          DelayedCall(function ()
+              UpdateStateAndUI();
+              PrintWarning("update OK?");
+          end, DELAYED_UPDATE_FOR_LABEL);
+      end,
+      true
+    );
 
-        DelayedCall(function ()
-            UpdateStateAndUI();
-            PrintWarning("update OK?");
-        end, DELAYED_UPDATE_FOR_LABEL);
-    end,
-    true
-  );
+    core:add_listener(
+      "admiralnelson_refresh_peasant_econ",
+      "ScriptEventRaiseForceButtonClicked",
+      true,
+      function ()
+          PrintWarning("new lord has been created?");
+          UpdateStateAndUI();
+      end,
+      true
+    );
 
-  core:add_listener(
-    "admiralnelson_refresh_peasant_econ",
-    "ScriptEventRaiseForceButtonClicked",
-    true,
-    function ()
-        PrintWarning("new lord has been created?");
-        UpdateStateAndUI();
-    end,
-    true
-  );
+    -- -- todo: bretonnian only
+    -- cm:add_faction_turn_start_listener_by_name(
+    --     "admiralnelson_refresh_peasant_econ",
+    --     "wh_main_brt_bretonnia",
+    --     function (context) UpdateStateAndUI(); end,
+    --     true
+    -- );
 
-  -- -- todo: bretonnian only
-  -- cm:add_faction_turn_start_listener_by_name(
-  --     "admiralnelson_refresh_peasant_econ",
-  --     "wh_main_brt_bretonnia",
-  --     function (context) UpdateStateAndUI(); end,
-  --     true
-  -- );
+    core:add_listener(
+      "admiralnelson_refresh_peasant_econ_on_char_screen",
+      "ComponentLClickUp",
+      function(context) return context.string == "button_ok" or context.string == "card" end,
+      function() UpdateStateAndUI() end,
+      true
+    );
 
-  core:add_listener(
-    "admiralnelson_refresh_peasant_econ_on_char_screen",
-    "ComponentLClickUp",
-    function(context) return context.string == "button_ok" end,
-    function() UpdateStateAndUI() end,
-    true
-  );
+    core:add_listener(
+      "admiralnelson_refresh_peasant_econ_on_start_turn",
+      "FactionTurnStart",
+      function (context) return IsBretonnianHuman(context:faction()); end,
+      function () UpdateStateAndUI(); end,
+      true
+    );
 
-  core:add_listener(
-    "admiralnelson_refresh_peasant_econ_on_start_turn",
-    "FactionTurnStart",
-    function (context) return IsBretonnianHuman(context:faction()); end,
-    function () UpdateStateAndUI(); end,
-    true
-  );
+    core:add_listener(
+      "admiralnelson_remote_procedure_call",
+      "UITrigger",
+      function(context) return context:trigger() == "admRPC_RefreshOgres"; end,
+      function() RPCSyncVariable(); end,
+      true
+    );
 
-  core:add_listener(
-    "admiralnelson_remote_procedure_call",
-    "UITrigger",
-    function(context) return context:trigger() == "admRPC_RefreshOgres"; end,
-    function() RPCSyncVariable(); end,
-    true
-  );
-
-  core:add_listener(
-    "admiralnelson_refresh_peasant_econ_on_end_turn",
-    "FactionTurnEnd",
-    function (context) return IsBretonnianHuman(context:faction()); end,
-    function ()
-      PrintError("on end turn called");
-      CampaignUI.TriggerCampaignScriptEvent(0, "admRPC_RefreshOgres");
-      UpdateStateAndUI();
-    end,
-    true
-  );
-
-  core:add_listener(
-    "admiralnelson_check_for_bretonnia_faction_alive",
-    "FactionTurnEnd",
-    true,
-    function ()
-      CheckIfDesignatedFactionDie();
-    end,
-    true
-  );
-
-  core:add_listener(
-    "admiralnelson_check_ogre_state_on_end_turn",
-    "FactionTurnEnd",
-    function (context) return IsBretonnian(context:faction()); end,
-    function (context)
-      if(IS_PLAYED_BY_HUMAN) then
+    core:add_listener(
+      "admiralnelson_refresh_peasant_econ_on_end_turn",
+      "FactionTurnEnd",
+      function (context) return IsBretonnianHuman(context:faction()); end,
+      function ()
+        PrintError("on end turn called");
         CampaignUI.TriggerCampaignScriptEvent(0, "admRPC_RefreshOgres");
-        return;
+        UpdateStateAndUI();
+      end,
+      true
+    );
+
+    core:add_listener(
+      "admiralnelson_check_for_bretonnia_faction_alive",
+      "FactionTurnEnd",
+      true,
+      function ()
+        CheckIfDesignatedFactionDie();
+      end,
+      true
+    );
+
+    core:add_listener(
+      "admiralnelson_check_ogre_state_on_end_turn",
+      "FactionTurnEnd",
+      function (context) return IsBretonnian(context:faction()); end,
+      function (context)
+        if(IS_PLAYED_BY_HUMAN) then
+          CampaignUI.TriggerCampaignScriptEvent(0, "admRPC_RefreshOgres");
+          return;
+        end
+        if(context:faction() == DESIGNATED_FACTION) then
+          PrintWarning("on end turn called for AIs...");
+          OnBretTurns();
+        end
+      end,
+      true
+    );
+
+    core:add_listener(
+      "admiralnelson_detect_for_paladin_spawn",
+      "UniqueAgentSpawned",
+      function (context)
+        PrintError("================Unique agent spawned ==============");
+        var_dump(context);
+        var_dump(context:unique_agent_details():character());
+        var_dump(context:unique_agent_details():character():character_subtype_key());
+        return IsGrailOgre(not context:unique_agent_details():character():is_null_interface() and
+                              context:unique_agent_details():character():character_subtype_key()
+                            or nil);
+      end,
+      function (context)
+        PrintError("saved context to variable");
+        local characterKey = context:unique_agent_details():character():character_subtype_key();
+        PrintError(characterKey);
+        UpdateStateAndUI();
+      end,
+      true
+    );
+
+    core:add_listener(
+      "admiralnelson_detect_for_agent_killed_or_disband_bot",
+      "UniqueAgentDespawned",
+      function (context)
+        if(not IS_PLAYED_BY_HUMAN) then return false; end
+        local character = context:unique_agent_details():character();
+        return not character:is_null_interface() and IsBretonnianBot(character:faction());
+      end,
+      function (context)
+        local character = context:unique_agent_details():character();
+        local characterKey = context:unique_agent_details():character():character_subtype_key();
+        print("BOT disbanded char is "..tostring(characterKey).."\a\a");
       end
-      if(context:faction() == DESIGNATED_FACTION) then
-        PrintError("on end turn called for AIs...");
-        OnBretTurns();
+    )
+
+    core:add_listener(
+      "admiralnelson_detect_for_agent_disband",
+      "UniqueAgentDespawned",
+      function(context)
+        local character = context:unique_agent_details():character();
+        return not character:is_null_interface() and IsBretonnianHuman(character:faction());
+      end,
+      function (context)
+        local character = context:unique_agent_details():character();
+        local characterKey = context:unique_agent_details():character():character_subtype_key();
+        print("disbanded char is "..tostring(characterKey));
+        UpdateStateAndUI();
+      end,
+      true
+    );
+
+    core:add_listener(
+      "admiralnelson_detect_for_agent_attach_or_detached",
+      "CharacterSelected",
+      true,
+      function (context)
+        print("selected char is "..tostring(context:character():character_subtype_key()));
+        UpdateStateAndUI();
+      end,
+      true
+    );
+
+  --------- battle monitors
+
+    core:add_listener(
+      "admiralnelson_monitor_for_battle_aftermath",
+      "CharacterCompletedBattle",
+      function() return cm:model():pending_battle():has_been_fought() end,
+      function(context)
+        PrintWarning("battle has been fought");
+        ProcessEventPostBattle(context);
+      end,
+      true
+    );
+
+    core:add_listener(
+      "admiralnelson_monitor_for_ongoing_battle",
+      "PendingBattle",
+      true,
+      function (context)
+        PrintWarning("battle is pending...");
+        local pendingBattle = context:pending_battle();
       end
-    end,
-    true
-  );
+    )
 
-  core:add_listener(
-    "admiralnelson_detect_for_paladin_spawn",
-    "UniqueAgentSpawned",
-    function (context)
-      PrintError("================Unique agent spawned ==============");
-      var_dump(context);
-      var_dump(context:unique_agent_details():character());
-      var_dump(context:unique_agent_details():character():character_subtype_key());
-      return IsGrailOgre(not context:unique_agent_details():character():is_null_interface() and
-                            context:unique_agent_details():character():character_subtype_key()
-                          or nil);
-    end,
-    function (context)
-      PrintError("saved context to variable");
-      local characterKey = context:unique_agent_details():character():character_subtype_key();
-      PrintError(characterKey);
-      UpdateStateAndUI();
-    end,
-    true
-  );
+    core:add_listener(
+      "admiralnelson_monitor_for_settlement_siege_aftermath_takeover",
+      "GarrisonOccupiedEvent",
+      true,
+      function(context)
+        PrintWarning("siege has been fought: take over");
+        ProcessSettlementPostSiege(context);
+      end,
+      true
+    );
 
-  core:add_listener(
-    "admiralnelson_detect_for_agent_killed_or_disband_bot",
-    "UniqueAgentDespawned",
-    function (context)
-      if(not IS_PLAYED_BY_HUMAN) then return false; end
-      local character = context:unique_agent_details():character();
-      return not character:is_null_interface() and IsBretonnianBot(character:faction());
-    end,
-    function (context)
-      local character = context:unique_agent_details():character();
-      local characterKey = context:unique_agent_details():character():character_subtype_key();
-      print("BOT disbanded char is "..tostring(characterKey).."\a\a");
-    end
-  )
+    core:add_listener(
+      "admiralnelson_monitor_for_settlement_siege_aftermath_sacked",
+      "CharacterSackedSettlement",
+      true,
+      function(context)
+        PrintWarning("siege has been fought: sack");
+        ProcessSettlementPostSiege(context);
+      end,
+      true
+    );
+  
+    core:add_listener(
+      "admiralnelson_monitor_for_settlement_siege_raze",
+      "CharacterRazedSettlement",
+      true,
+      function(context)
+        PrintWarning("siege has been fought: raze");
+        ProcessSettlementPostSiege(context);
+      end,
+      true
+    );
 
-  core:add_listener(
-    "admiralnelson_detect_for_agent_disband",
-    "UniqueAgentDespawned",
-    function(context)
-      local character = context:unique_agent_details():character();
-      return not character:is_null_interface() and IsBretonnianHuman(character:faction());
-    end,
-    function (context)
-      local character = context:unique_agent_details():character();
-      local characterKey = context:unique_agent_details():character():character_subtype_key();
-      print("disbanded char is "..tostring(characterKey));
-      UpdateStateAndUI();
-    end,
-    true
-  );
+  -------- dillema monitor
 
-  core:add_listener(
-    "admiralnelson_detect_for_agent_attach_or_detached",
-    "CharacterSelected",
-    true,
-    function (context)
-      print("selected char is "..tostring(context:character():character_subtype_key()));
-      UpdateStateAndUI();
-    end,
-    true
-  );
+    core:add_listener(
+      "admirealnelson_check_for_dillema_multiple_choices",
+      "DilemmaChoiceMadeEvent",
+      true,
+      function (context)
+        ProcessOgreDillemaOnAccept(context);
+      end,
+      true
+    );
 
---------- battle monitors
 
-  core:add_listener(
-    "admiralnelson_monitor_for_battle_aftermath",
-    "CharacterCompletedBattle",
-    function() return cm:model():pending_battle():has_been_fought() end,
-    function(context)
-      PrintWarning("battle has been fought");
-      ProcessEventPostBattle(context);
-    end,
-    true
-  );
+  end, 0.1);
+  -- away we go!;
+  ConfigureTheMod();
+end
 
-  core:add_listener(
-    "admiralnelson_monitor_for_ongoing_battle",
-    "PendingBattle",
-    true,
-    function (context)
-      PrintWarning("battle is pending...");
-      local pendingBattle = context:pending_battle();
-    end
-  )
-
-  core:add_listener(
-    "admiralnelson_monitor_for_settlement_siege_aftermath_takeover",
-    "GarrisonOccupiedEvent",
-    true,
-    function(context)
-      PrintWarning("siege has been fought: take over");
-      ProcessSettlementPostSiege(context);
-    end,
-    true
-  );
-
-  core:add_listener(
-    "admiralnelson_monitor_for_settlement_siege_aftermath_sacked",
-    "CharacterSackedSettlement",
-    true,
-    function(context)
-      PrintWarning("siege has been fought: sack");
-      ProcessSettlementPostSiege(context);
-    end,
-    true
-  );
-
-  core:add_listener(
-    "admiralnelson_monitor_for_settlement_siege_raze",
-    "CharacterRazedSettlement",
-    true,
-    function(context)
-      PrintWarning("siege has been fought: raze");
-      ProcessSettlementPostSiege(context);
-    end,
-    true
-  );
-
--------- dillema monitor
-
-  core:add_listener(
-    "admirealnelson_check_for_dillema_multiple_choices",
-    "DilemmaChoiceMadeEvent",
-    true,
-    function (context)
-      ProcessOgreDillemaOnAccept(context);
-    end,
-    true
-  );
-
-end, 0.1);
-
--- away we go!;
-ConfigureTheMod();
+if(PJ_LOADFILE) then
+  PrintWarning("this script is running from file directly...");
+  START();
+else
+  cm:add_first_tick_callback(function ()
+    PrintWarning("release mode");
+    START();
+  end)
+end
 
 DEBUG = false;
 
