@@ -5,7 +5,7 @@ local var_dump = require("var_dump");
 
 local print = function (x)
   out("admiralnelson: "..tostring(x));
-  print2(tostring(x).."\n");
+  if(print2) then print2(tostring(x).."\n"); end
 end;
 
 print("Running Knights of Round Belly mod version "..VERSION);
@@ -440,7 +440,7 @@ local GetFactionName = function (faction)
   return (faction ~= nil and
           faction:is_null_interface() == false and
           faction:is_dead() == false and
-          faction:name() or error("faction was invalid!"));
+          faction:name() or throw("faction was invalid!"));
 end
 
 -- factionkeys : string or array
@@ -1343,9 +1343,11 @@ local START = function ()
       "admiralnelson_refresh_peasant_econ_on_end_turn",
       "FactionTurnEnd",
       function (context) return IsBretonnianHuman(context:faction()); end,
-      function ()
+      function (context)
+        local faction = context:faction();
+        local cqi = faction:command_queue_index();
         PrintError("on end turn called");
-        CampaignUI.TriggerCampaignScriptEvent(0, "admRPC_RefreshOgres");
+        CampaignUI.TriggerCampaignScriptEvent(cqi, "admRPC_RefreshOgres");
         UpdateStateAndUI();
       end,
       true
@@ -1367,7 +1369,9 @@ local START = function ()
       function (context) return IsBretonnian(context:faction()); end,
       function (context)
         if(IS_PLAYED_BY_HUMAN) then
-          CampaignUI.TriggerCampaignScriptEvent(0, "admRPC_RefreshOgres");
+          local faction = context:faction();
+          local cqi = faction:command_queue_index();
+          CampaignUI.TriggerCampaignScriptEvent(cqi, "admRPC_RefreshOgres");
           return;
         end
         if(context:faction() == DESIGNATED_FACTION) then
@@ -1522,10 +1526,12 @@ if(PJ_LOADFILE) then
   PrintWarning("this script is running from file directly...");
   START();
   if(DEBUG) then DebugMode(); end
+  PrintWarning("script loaded (debug)");
 else
   cm:add_first_tick_callback(function ()
     PrintWarning("release mode");
     START();
     if(DEBUG) then DebugMode(); end
+    PrintWarning("script loaded");
   end);
 end
