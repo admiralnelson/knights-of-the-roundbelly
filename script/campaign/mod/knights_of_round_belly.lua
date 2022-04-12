@@ -72,6 +72,8 @@ local ConcatArray = function (a, b)
     end
 end
 
+local RPC_TRIGGER = "admRPC_RefreshOgres";
+
 local POSITIVE_PEASANT_ECON_PIC_URL = "ui\\skins\\default\\peasant_economy_top_positive.png";
 local NEGATIVE_PEASANT_ECON_PIC_URL = "ui\\skins\\default\\peasant_economy_top_negative.png";
 
@@ -1141,6 +1143,8 @@ local ProcessEventPostBattle = function (context)
   DelayedCall(function ()
     SpawnGrailOgreOnArmyIfPossible(actualLord:command_queue_index(), army:command_queue_index());
   end, 0.7);
+  UpdateStateAndUI();
+  CampaignUI.TriggerCampaignScriptEvent(actualLord:command_queue_index(), RPC_TRIGGER);
 end
 
 local ConfigureTheMod = function ()
@@ -1334,7 +1338,7 @@ local START = function ()
     core:add_listener(
       "admiralnelson_remote_procedure_call",
       "UITrigger",
-      function(context) return context:trigger() == "admRPC_RefreshOgres"; end,
+      function(context) return context:trigger() == RPC_TRIGGER; end,
       function() RPCSyncVariable(); end,
       true
     );
@@ -1347,7 +1351,7 @@ local START = function ()
         local faction = context:faction();
         local cqi = faction:command_queue_index();
         PrintError("on end turn called");
-        CampaignUI.TriggerCampaignScriptEvent(cqi, "admRPC_RefreshOgres");
+        CampaignUI.TriggerCampaignScriptEvent(cqi, RPC_TRIGGER);
         UpdateStateAndUI();
       end,
       true
@@ -1371,7 +1375,7 @@ local START = function ()
         if(IS_PLAYED_BY_HUMAN) then
           local faction = context:faction();
           local cqi = faction:command_queue_index();
-          CampaignUI.TriggerCampaignScriptEvent(cqi, "admRPC_RefreshOgres");
+          CampaignUI.TriggerCampaignScriptEvent(cqi, RPC_TRIGGER);
           return;
         end
         if(context:faction() == DESIGNATED_FACTION) then
