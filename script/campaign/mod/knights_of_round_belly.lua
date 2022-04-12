@@ -1,5 +1,5 @@
 ---SCRIPT WORKING.
-local VERSION = "0.2.0"
+local VERSION = "0.2.1"
 local json = require("libsneedio_json");
 local var_dump = require("var_dump");
 
