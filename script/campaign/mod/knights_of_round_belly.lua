@@ -1,5 +1,5 @@
 ---SCRIPT WORKING.
-local VERSION = "0.2.1"
+local VERSION = "0.2.2"
 local json = require("libsneedio_json");
 local var_dump = require("var_dump");
 
@@ -1075,8 +1075,8 @@ local ProcessSettlementPostSiege = function (context)
   if(not IsBretonnianHuman(faction)) then return; end
   if(not IsFactionAllowedToSpawnGrailOgre(faction)) then return; end
 
-  local lordAttackerIndex, _, _ = cm:pending_battle_cache_get_attacker(1);
-  local actualLord = cm:get_character_by_cqi(lordAttackerIndex);
+  local actualLord = context:character();
+  local lordAttackerIndex = actualLord:command_queue_index();
   local lordX   = actualLord:logical_position_x();
   local lordY   = actualLord:logical_position_y();
   local lordKey = actualLord:character_subtype_key();
