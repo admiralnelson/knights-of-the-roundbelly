@@ -11,8 +11,8 @@ end;
 print("Running Knights of Round Belly mod version "..VERSION);
 
 local DEBUG  = false;
-local PError = PrintError or print;
-local PWarn  = PrintWarning or print;
+local PError = PrintError;
+local PWarn  = PrintWarning;
 local core = core;
 local cm = cm;
 local find_uicomponent = find_uicomponent;
@@ -71,6 +71,33 @@ local ConcatArray = function (a, b)
         table.insert(a, v)
     end
 end
+
+local NEWER = -1;
+local OLDER = 1;
+local SAME = 0;
+
+local CompareVersionString = function (a, b)
+  local asplit = SplitStr(a, ".");
+  local bsplit = SplitStr(b, ".");
+
+  local aLen = #asplit;
+  local bLen = #bsplit;
+
+  local len = math.max(aLen, bLen);
+
+  for i = 1, len do
+    local aPart = asplit[i] or 0;
+    local bPart = bsplit[i] or 0;
+
+    if(aPart > bPart) then
+      return OLDER;
+    elseif(aPart < bPart) then
+      return NEWER;
+    end
+  end
+  return SAME;
+end
+
 
 local RPC_TRIGGER = "admRPC_RefreshOgres";
 
@@ -1517,6 +1544,7 @@ local START = function ()
       true
     );
 
+    -- cm:add_saving_game_callback(
 
   end, 0.1);
   -- away we go!;
