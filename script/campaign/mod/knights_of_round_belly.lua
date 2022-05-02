@@ -1,5 +1,5 @@
 ---SCRIPT WORKING.
-local VERSION = "0.2.2"
+local VERSION = "0.2.3";
 local json = require("libsneedio_json");
 local var_dump = require("var_dump");
 
@@ -23,16 +23,12 @@ local Remove_Economy_Penalty = Remove_Economy_Penalty;
 local Show_Peasant_Warning = Show_Peasant_Warning;
 local throw = error;
 
-local bInited = false;
-
 local PrintError = function (x)
-  if(PError) then PError(tostring(x).."\n"); else print("ERROR "..x); end
-  --print("ERROR "..x);
+  if(PError) then PError(x.."\n"); else print("ERROR "..x); end
 end
 
 local PrintWarning = function (x)
-  if(PWarn) then PWarn(tostring(x).."\n"); else print("WARN "..x); end
-  --print("WARN "..x);
+  if(PWarn) then PWarn(x.."\n"); else print("WARN "..x); end
 end
 
 if(json) then PrintWarning("json existed"); end
@@ -209,6 +205,13 @@ local BretonnianFactions = {
     "wh2_dlc14_brt_chevaliers_de_lyonesse"
 };
 
+local BretonniaFactionsPriority = {
+  [BretonnianFactions[1]] = 1,
+  [BretonnianFactions[2]] = 2,
+  [BretonnianFactions[3]] = 3,
+  [BretonnianFactions[4]] = 4
+};
+
 local PeasantSlotReductionSkills = {
 
   ["admiralnelson_ogre_being_is_generally_unchivalrous_and_savage_skills_key_background_skill_scripted"] = 6,
@@ -310,6 +313,16 @@ local GrailOgreSpawned = {
   [CLAUDIN_AGENT_KEY] = false,
   [GARRAVAIN_D_ESTRANGOT_AGENT_KEY] = false,
   [LUCANT_LE_BOUTELLIER_AGENT_KEY] = false
+};
+
+local GrailOgres = {
+  LOUIS_LE_GROS_AGENT_KEY,
+  YVAIN_LE_BATARD_AGENT_KEY,
+  GORNEMANT_DE_GOORT_AGENT_KEY,
+  HECTOR_DE_MARIS_AGENT_KEY,
+  CLAUDIN_AGENT_KEY,
+  GARRAVAIN_D_ESTRANGOT_AGENT_KEY,
+  LUCANT_LE_BOUTELLIER_AGENT_KEY
 };
 
 local RandomGrailOgres = {};
@@ -439,7 +452,7 @@ local IsGrailOgreHasSpawnedBefore = function (agentKey)
 end
 
 local IsGrailOgre = function (mainUnitKey)
-  return mainUnitKey ~= nil and InitialGrailKnightOgrePeasantResevationSlots[mainUnitKey] ~= nil;
+  return mainUnitKey ~= nil and GrailOgres[mainUnitKey] ~= nil;
 end
 
 local IsFoundLockedOgre = function ()
@@ -602,38 +615,89 @@ local ResetOgreStates = function ()
 end
 
 local PickWhichFactionIsAllowedToSpawnOgre = function ()
-  -- follow this prio:
-  -- louen > fay > alberic > repanse
-  local TargetFaction = nil;
-  local Brets = GetFactionByIds(BretonnianFactions);
-  local HumanBrets = FindHumanBretonnianFactions();
+  print("PickWhichFactionIsAllowedToSpawnOgre");
+  print(debug.traceback());
+  -- for 0.2.2 and below
+  -- wrong algorithm lol
+  local OldImplementation = function ()
+    -- follow this prio:
+    -- louen > fay > alberic > repanse
+    local TargetFaction = nil;
+    local Brets = GetFactionByIds(BretonnianFactions);
+    local HumanBrets = FindHumanBretonnianFactions();
 
-  if(#HumanBrets == 0) then -- all brets are AI
-    ForEach(Brets, function (faction)
+    if(#HumanBrets == 0) then -- all brets are AI
+      ForEach(Brets, function (faction)
+        if(TargetFaction == GetFactionByIds(BretonnianFactions[1])) then return; end -- louen
+        if(TargetFaction == GetFactionByIds(BretonnianFactions[2])) then return; end -- fay
+        if(TargetFaction == GetFactionByIds(BretonnianFactions[3])) then return; end -- alberic
+        if(TargetFaction == GetFactionByIds(BretonnianFactions[4])) then return; end -- repanse
+        if(IsBretonnian(faction)) then TargetFaction = faction; end
+      end);
+      IS_PLAYED_BY_HUMAN = TargetFaction:is_human();
+      return TargetFaction;
+    end
+
+    -- follow this prio:
+    -- if there are(or is) human player pick based on this pref
+    -- louen > fay > alberic > repanse
+
+    ForEach(HumanBrets, function (faction)
       if(TargetFaction == GetFactionByIds(BretonnianFactions[1])) then return; end -- louen
       if(TargetFaction == GetFactionByIds(BretonnianFactions[2])) then return; end -- fay
       if(TargetFaction == GetFactionByIds(BretonnianFactions[3])) then return; end -- alberic
       if(TargetFaction == GetFactionByIds(BretonnianFactions[4])) then return; end -- repanse
-      if(IsBretonnian(faction)) then TargetFaction = faction; end
+      if(IsBretonnianHuman(faction)) then TargetFaction = faction; end
     end);
     IS_PLAYED_BY_HUMAN = TargetFaction:is_human();
     return TargetFaction;
+  end;
+
+  -- for 0.2.3 and above
+  local NewImplementation = function ()
+    local TargetFaction = nil;
+    local Brets = GetFactionByIds(BretonnianFactions);
+    local HumanBrets = FindHumanBretonnianFactions();
+
+    if(#HumanBrets == 0) then -- all brets are AI
+      table.sort(Brets, function (a, b)
+        return BretonniaFactionsPriority[a:name()] < BretonniaFactionsPriority[b:name()];
+      end);
+      TargetFaction = Brets[1];
+      IS_PLAYED_BY_HUMAN = false;
+      return TargetFaction;
+    end
+
+    table.sort(HumanBrets, function (a, b)
+      return BretonniaFactionsPriority[a:name()] < BretonniaFactionsPriority[b:name()];
+    end);
+    TargetFaction = HumanBrets[1];
+    IS_PLAYED_BY_HUMAN = true;
+    return TargetFaction;
   end
 
-  -- follow this prio:
-  -- if there are(or is) human player pick based on this pref
-  -- louen > fay > alberic > repanse
+  -- check version first
+  local saveGameVersion = GetSavedValue(ADMIRALNELSON_GRAIL_OGRE_VERSION);
+  print(saveGameVersion);
 
-  ForEach(HumanBrets, function (faction)
-    if(TargetFaction == GetFactionByIds(BretonnianFactions[1])) then return; end -- louen
-    if(TargetFaction == GetFactionByIds(BretonnianFactions[2])) then return; end -- fay
-    if(TargetFaction == GetFactionByIds(BretonnianFactions[3])) then return; end -- alberic
-    if(TargetFaction == GetFactionByIds(BretonnianFactions[4])) then return; end -- repanse
-    if(IsBretonnianHuman(faction)) then TargetFaction = faction; end
-  end);
-  IS_PLAYED_BY_HUMAN = TargetFaction:is_human();
-  return TargetFaction;
+  if(saveGameVersion == nil) then
+    PrintWarning("save game version is nil, assumed fresh state");
+    return NewImplementation();
+  end
 
+  if(CompareVersionString(saveGameVersion, VERSION) == SAME) then
+    return NewImplementation();
+  end
+
+  if(CompareVersionString(saveGameVersion, VERSION) == NEWER) then
+    PrintWarning("save game is older version: "..saveGameVersion.." current script version: "..VERSION);
+    return OldImplementation();
+  end
+
+  if(CompareVersionString(saveGameVersion, VERSION) == OLDER) then
+    PrintError("what the fuck");
+    throw("wtf?"); -- should never happen
+  end
 end
 
 local SetOgreHasSpawned = function (agentKey)
@@ -871,7 +935,10 @@ local UpdateInternalState = function (onComplete)
 end
 
 local UpdateStateAndUI = function ()
-  if(not IS_PLAYED_BY_HUMAN) then return; end
+  if(not IS_PLAYED_BY_HUMAN) then 
+    PrintError("user is not human!");
+    return;
+  end
   -- State & UI
   DelayedCall(function ()
       UpdateInternalState(function ()
@@ -1532,6 +1599,17 @@ local START = function ()
       true
     );
 
+    core:add_listener(
+      "admiralnelson_monitor_settlement_on_click",
+      "SettlementSelected",
+      true,
+      function(context)
+        PrintWarning("settlement selected");
+        UpdateStateAndUI();
+      end,
+      true
+    );
+
   -------- dillema monitor
 
     core:add_listener(
@@ -1544,7 +1622,9 @@ local START = function ()
       true
     );
 
-    -- cm:add_saving_game_callback(
+    DelayedCall(function ()
+      UpdateStateAndUI();
+    end, 2);
 
   end, 0.1);
   -- away we go!;
