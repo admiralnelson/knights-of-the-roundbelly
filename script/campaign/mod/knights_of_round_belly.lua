@@ -1416,8 +1416,11 @@ local START = function ()
     core:add_listener(
       "admiralnelson_refresh_peasant_econ_on_char_screen",
       "ComponentLClickUp",
-      function(context) return context.string == "button_ok" or context.string == "card" end,
-      function() UpdateStateAndUI() end,
+      function(context) return context.string == "button_ok" or
+                               context.string == "card" or
+                               context.string == "button_stats_reset";
+      end,
+      function() UpdateStateAndUI(); end,
       true
     );
 
@@ -1621,6 +1624,8 @@ local START = function ()
       end,
       true
     );
+
+    --- update UI during game startup
 
     DelayedCall(function ()
       UpdateStateAndUI();
